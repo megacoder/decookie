@@ -1,0 +1,20 @@
+#!/bin/zsh
+set -e
+
+# Replace a column field for each line in stdin
+replace_column_value() {
+    awk "BEGIN{OFS=FS=\"$1\"} {\$$2 = ((\$$2==\"$3\")?\"$4\":\"$5\"); print}"
+}
+
+# Convert a Mozilla sqlite cookie file to the old txt format
+mozilla_cookies_sqlite2txt() {
+    echo "# Netscape HTTP Cookie File"
+    echo ".mode tabs
+          SELECT host, (host GLOB '.*'), path, 'FALSE', expiry, name, value
+          FROM moz_cookies;" | sqlite3 "$1" | \
+          replace_column_value "\t" 2 "1" "TRUE" "FALSE" | \
+          recode iso8859-1..utf-8
+}
+
+FILE="$1"
+mozilla_cookies_sqlite2txt "${FILE}"
